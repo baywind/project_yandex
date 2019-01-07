@@ -22,13 +22,14 @@ class Ball(pygame.sprite.Sprite):
         self.used = []
 
     def update(self):
-        if self in obstacles:
-            return
         self.cx += self.vx * tick / 1000
         self.cy += self.vy * tick / 1000
         self.rect.centerx = int(self.cx)
         self.rect.centery = int(self.cy)
-        self.collide(pygame.sprite.spritecollideany(self, all_sprites, pygame.sprite.collide_circle))
+        collisions = pygame.sprite.spritecollide(self, all_sprites, 0, pygame.sprite.collide_circle)
+        collisions.remove(self)
+        for other in collisions:
+            self.collide(other)
         self.used.clear()
         if self.rect.x > screen.get_width() or self.rect.y > screen.get_height() \
                 or self.rect.x < -self.rect.width or self.rect.y < -self.rect.height:
@@ -51,10 +52,10 @@ class Ball(pygame.sprite.Sprite):
 
         vr = (dx * self.vx + dy * self.vy) / r
         vt = (dy * self.vx - dx * self.vy) / r
+        o_vr = (dx * other.vx + dy * other.vy) / r
         if other.m is None:
-            vr = -abs(vr)
+            vr = 2 * o_vr - abs(vr)
         else:
-            o_vr = (dx * other.vx + dy * other.vy) / r
             o_vt = (dy * other.vx - dx * other.vy) / r
 
             e = self.m * vr**2 + other.m * o_vr**2
@@ -74,11 +75,6 @@ class Ball(pygame.sprite.Sprite):
 
         self.vx = (dx * vr + dy * vt) / r
         self.vy = (dy * vr - dx * vt) / r
-
-    def get_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
-            self.vx = 0
-            self.vy = 0
 
 
 class Line:
@@ -137,8 +133,15 @@ while running:
             if event.button == 3:
                 obstacle = event.pos
             elif event.button == 1:
-                ball = Ball(event.pos, 10, pygame.Color('red'), m=1)
-                line = Line(event.pos)
+                for s in all_sprites:
+                    if distance(s.center(), event.pos) < s.radius:
+                        ball = s
+                        ball.vx = ball.vy = 0
+                        ball.rect.center = event.pos
+                        break
+                else:
+                    ball = Ball(event.pos, 10, pygame.Color('red'), m=1)
+                line = Line(ball.center())
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
                 if type(obstacle) == tuple:
