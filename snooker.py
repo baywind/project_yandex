@@ -137,7 +137,8 @@ while running:
                     if distance(s.center(), event.pos) < s.radius:
                         ball = s
                         ball.vx = ball.vy = 0
-                        ball.rect.center = event.pos
+                        ball.cx = event.pos[0]
+                        ball.cy = event.pos[1]
                         break
                 else:
                     ball = Ball(event.pos, 10, pygame.Color('red'), m=1)
