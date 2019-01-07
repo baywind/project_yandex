@@ -8,7 +8,7 @@ def distance(pos1, pos2):
 
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, center, r, color=pygame.Color('white'), vx=0, vy=0):
+    def __init__(self, center, r, color=pygame.Color('white'), vx=0, vy=0, m=None):
         super().__init__(all_sprites)
         self.image = pygame.Surface([r * 2, r * 2], pygame.SRCALPHA)
         self.rect = pygame.Rect(center[0] - r, center[1] - r, r * 2, r * 2)
@@ -18,6 +18,8 @@ class Ball(pygame.sprite.Sprite):
         self.vy = vy
         self.cx = center[0]
         self.cy = center[1]
+        self.m = m
+        self.used = []
 
     def update(self):
         if self in obstacles:
@@ -26,9 +28,8 @@ class Ball(pygame.sprite.Sprite):
         self.cy += self.vy * tick / 1000
         self.rect.centerx = int(self.cx)
         self.rect.centery = int(self.cy)
-        o = pygame.sprite.spritecollideany(self, obstacles, pygame.sprite.collide_circle)
-        if o:
-            self.collide(o)
+        self.collide(pygame.sprite.spritecollideany(self, all_sprites, pygame.sprite.collide_circle))
+        self.used.clear()
         if self.rect.x > screen.get_width() or self.rect.y > screen.get_height() \
                 or self.rect.x < -self.rect.width or self.rect.y < -self.rect.height:
             self.kill()
@@ -41,13 +42,36 @@ class Ball(pygame.sprite.Sprite):
         self.vy += self.cy - pos[1]
 
     def collide(self, other):
+        if not other or other is self \
+                or self.m is None or other in self.used:
+            return
         dx = other.cx - self.cx
         dy = other.cy - self.cy
         r = (dx ** 2 + dy ** 2)**0.5
 
         vr = (dx * self.vx + dy * self.vy) / r
         vt = (dy * self.vx - dx * self.vy) / r
-        vr = -vr
+        if other.m is None:
+            vr = -abs(vr)
+        else:
+            o_vr = (dx * other.vx + dy * other.vy) / r
+            o_vt = (dy * other.vx - dx * other.vy) / r
+
+            e = self.m * vr**2 + other.m * o_vr**2
+            p = self.m * vr + other.m * o_vr
+            # a*V**2 - 2*b*V + c == 0
+            a = self.m * (self.m + other.m)
+            b = self.m * p
+            c = p**2 - e * other.m
+            d = b**2 - a*c
+            if d <= 0:
+                raise ValueError
+            vr = (b - d**0.5) / a
+            o_vr = (p - self.m * vr) / other.m
+            other.used.append(self)
+            other.vx = (dx * o_vr + dy * o_vt) / r
+            other.vy = (dy * o_vr - dx * o_vt) / r
+
         self.vx = (dx * vr + dy * vt) / r
         self.vy = (dy * vr - dx * vt) / r
 
@@ -113,7 +137,7 @@ while running:
             if event.button == 3:
                 obstacle = event.pos
             elif event.button == 1:
-                ball = Ball(event.pos, 10, pygame.Color('red'))
+                ball = Ball(event.pos, 10, pygame.Color('red'), m=1)
                 line = Line(event.pos)
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
