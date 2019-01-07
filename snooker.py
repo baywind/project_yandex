@@ -43,8 +43,7 @@ class Ball(pygame.sprite.Sprite):
         self.vy += self.cy - pos[1]
 
     def collide(self, other):
-        if not other or other is self \
-                or self.m is None or other in self.used:
+        if self.m is None or other in self.used:
             return
         dx = other.cx - self.cx
         dy = other.cy - self.cy
