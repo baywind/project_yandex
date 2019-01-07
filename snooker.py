@@ -103,6 +103,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYUP:
+            for s in all_sprites:
+                if event.key == pygame.K_SPACE:
+                    s.vx = s.vy = 0
+                elif event.key in (pygame.K_BACKSPACE, pygame.K_DELETE, pygame.K_ESCAPE):
+                    s.kill()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 3:
                 obstacle = event.pos
