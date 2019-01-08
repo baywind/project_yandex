@@ -21,6 +21,13 @@ class Ball(pygame.sprite.Sprite):
         self.m = m
         self.used = []
 
+    def center(self):
+        return self.cx, self.cy
+
+    def punch(self, pos):
+        self.vx += self.cx - pos[0]
+        self.vy += self.cy - pos[1]
+
     def update(self):
         self.cx += self.vx * tick / 1000
         self.cy += self.vy * tick / 1000
@@ -34,13 +41,6 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.x > screen.get_width() or self.rect.y > screen.get_height() \
                 or self.rect.x < -self.rect.width or self.rect.y < -self.rect.height:
             self.kill()
-
-    def center(self):
-        return self.cx, self.cy
-
-    def punch(self, pos):
-        self.vx += self.cx - pos[0]
-        self.vy += self.cy - pos[1]
 
     def collide(self, other):
         if self.m is None or other in self.used:
@@ -64,7 +64,7 @@ class Ball(pygame.sprite.Sprite):
             b = self.m * p
             c = p**2 - e * other.m
             d = b**2 - a*c
-            if d <= 0:
+            if d < 0:
                 raise ValueError
             vr = (b - d**0.5) / a
             o_vr = (p - self.m * vr) / other.m
