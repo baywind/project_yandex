@@ -23,10 +23,10 @@ class Board:
                 self.draw_cell(x, y)
 
     def draw_cell(self, x, y):
-        pygame.draw.rect(screen, pygame.Color(255, 255, 255), self.cell_rect(x, y) , 1)
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), self.cell_rect(x, y), 1)
 
     def cell_rect(self, x, y):
-        return (x * self.cell_size + self.left, y * self.cell_size + self.top,
+        return pygame.Rect(x * self.cell_size + self.left, y * self.cell_size + self.top,
                           self.cell_size, self.cell_size)
 
     # настройка внешнего вида
@@ -57,6 +57,7 @@ class Lines(Board):
     BALL = 'ball'
     active = None
     target = None
+    paths = None
 
     def on_click(self, cell):
         x, y = cell
@@ -73,6 +74,73 @@ class Lines(Board):
             else:
                 self.board[x][y] = Lines.BALL
 
+    def draw_cell(self, x, y):
+        rect = self.cell_rect(x, y)
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), rect, 1)
+        if self.board[x][y] == Lines.BALL:
+            c = pygame.Color("blue")
+            if self.active == (x, y):
+                c = pygame.Color("red")
+            pygame.draw.circle(screen, c, rect.center, self.cell_size // 3)
+        if self.target == (x, y):
+            pygame.draw.circle(screen, pygame.Color("white"), rect.center, self.cell_size // 3, 1)
+        if self.paths:
+            if (x, y) == self.curr:
+                pygame.draw.rect(screen, pygame.Color("green"), rect)
+            elif (x, y) in self.todo:
+                pygame.draw.rect(screen, pygame.Color("yellow"), rect)
+            if (x, y) in self.paths:
+                font = pygame.font.Font(None, 30)
+                text = font.render(str(len(self.paths[(x, y)])), 1, (128, 128, 128))
+                screen.blit(text, rect)
+
+    def update(self):
+        if self.target is None:
+            return
+        if self.paths is None:
+            self.paths = {self.active: []}
+            self.todo = []
+            self.curr = self.active
+            return
+        if self.target in self.paths:
+            if self.curr != self.target:
+                self.curr = self.target
+                self.todo = self.paths[self.target][:]
+                self.paths[self.active] = self.todo
+            x, y = self.active
+            self.board[x][y] = None
+            if self.todo:
+                self.active = self.todo.pop(0)
+                x, y = self.active
+                self.board[x][y] = Lines.BALL
+            else:
+                x, y = self.target
+                self.board[x][y] = Lines.BALL
+                self.paths = self.active = self.target = None
+                del self.todo, self.curr
+                return
+            return
+        if self.curr is None:
+            if len(self.todo) == 0:
+                self.paths = None
+                del self.todo
+                return
+            self.curr = self.todo.pop(0)
+            return
+        x, y = self.curr
+        self.curr = None
+        path = self.paths[(x, y)] + [(x, y)]
+        for xx, yy in (x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1):
+            if not (0 <= xx < self.width and 0 <= yy < self.height):
+                continue
+            if (xx, yy) in self.paths:
+                continue
+            if self.board[xx][yy] == Lines.BALL:
+                continue
+            self.paths[(xx, yy)] = path
+            self.todo.append((xx, yy))
+
+
 
 board = Lines(10, 10)
 board.set_view(10, 10, 40)
@@ -86,8 +154,8 @@ while running:
         board.get_click(event.pos)
 
     screen.fill((0, 0, 0))
+    board.update()
     board.render()
-    # board.update()
     pygame.display.flip()
     # clock.tick(10)
 
