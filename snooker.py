@@ -140,7 +140,7 @@ while running:
                         ball.cy = event.pos[1]
                         break
                 else:
-                    ball = Ball(event.pos, 10, pygame.Color('red'), m=1)
+                    ball = Ball(event.pos, 10, pygame.Color('white'), m=1)
                 line = Line(ball.center())
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
