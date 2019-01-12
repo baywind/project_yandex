@@ -7,6 +7,11 @@ screen = pygame.display.set_mode(size)
 
 
 class Life(Board):
+    def __init__(self, width, height):
+        super().__init__(width, height)
+        self.board = [[0] * height for _ in range(width)]
+
+
     def on_click(self, cell):
         x, y = cell
         val = self.board[x][y]
@@ -14,12 +19,34 @@ class Life(Board):
 
     def draw_cell(self, x, y, screen):
         val = self.board[x][y]
-        pygame.draw.rect(screen, pygame.Color(255, 255, 255), self.cell_rect(x, y),
-                         0 if val else 1)
+        rect = self.cell_rect(x, y)
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), rect, 0 if val else 1)
+        font = pygame.font.Font(None, 20)
+        text = font.render(str(self.around(x, y)), 1, (128, 128, 128))
+        screen.blit(text, rect)  # вычисленная длина пути до клетки
+
+    def around(self, x, y):
+        total = 0
+        low = y - 1
+        if low < 0:
+            low = 0
+        else:
+            total += self.board[x][low]
+        top = y + 1
+        if top >= self.height:
+            top = y
+        else:
+            total += self.board[x][top]
+        top += 1
+        if x > 0:
+            total += sum(self.board[x-1][low:top])
+        if x < self.width - 1:
+            total += sum(self.board[x+1][low:top])
+        return total
 
 
-board = Life(40, 30)
-board.set_view(10, 10, 20)
+board = Life(10, 10)
+board.set_view(10, 10, 40)
 
 running = True
 while running:
