@@ -3,10 +3,10 @@ import pygame
 
 class Board:
     # создание поля
-    def __init__(self, width, height):
+    def __init__(self, width, height, value=None):
         self.width = width
         self.height = height
-        self.board = [[None] * height for _ in range(width)]
+        self.board = [[value] * height for _ in range(width)]
         # значения по умолчанию
         self.left = 10
         self.top = 10
