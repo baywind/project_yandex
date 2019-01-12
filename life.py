@@ -2,13 +2,13 @@ import pygame
 from gena.gameboard import Board
 
 pygame.init()
-size = 820, 820
+size = 820, 620
 screen = pygame.display.set_mode(size)
 
 
 class Life(Board):
     def on_click(self, cell):
-        x, y  = cell
+        x, y = cell
         val = self.board[x][y]
         self.board[x][y] = 0 if val else 1
 
@@ -18,7 +18,7 @@ class Life(Board):
                          0 if val else 1)
 
 
-board = Life(40, 40)
+board = Life(40, 30)
 board.set_view(10, 10, 20)
 
 running = True
